@@ -1,4 +1,6 @@
 參考網址： https://ithelp.ithome.com.tw/users/20119338/ironman/3008
+假資料套件：https://www.section.io/engineering-education/how-to-generate-fake-data-in-node-using-faker.js/
+對應的是 laravel seeder
 1.  init 專案
     npm init
 
@@ -215,3 +217,63 @@
     src/environments
 
     這樣剛剛設定好的 env 就不會進去了
+
+
+2.  設定 express router 分離
+    如果後面專案架構變大以後會需要 middleware 層去做相關的驗證
+    新增一個 src/app 的資料夾，建立 app.routing.ts 的檔案
+    內容為
+    import express from 'express';
+    const router = express.Router();
+
+    router.get('/test', (req, res, next) => {
+        res.send('test!');
+    });
+
+    export default router;
+
+    然後修改一下 index.ts
+    import express from 'express';
+    import path from 'path';
+    import dotenv from 'dotenv';
+
+    import appRoute from './app/app.routing';
+
+    const app = express();
+
+    dotenv.config({ path: path.resolve(__dirname, `./environments/${ process.env.NODE_ENV }.env`) });
+
+    app.get('/', (req, res, next) => {
+        res.send('Hello, World!!');
+    });
+
+    app.use('/', appRoute);
+
+    app.listen(process.env.PORT, () => console.log(`http server is running at port ${ process.env.PORT }.`));
+
+    然後去 /test 可以看到畫面出現 test!
+    這裡可以看到是 app.use 的方式去使用 appRoute 可以用這樣的方式去定義想要新增的 middleware/router
+
+    然後 app.routing.ts 這隻檔案會去處理 bodyParser 這個東西就是用來處理傳進來的東西要轉成 json 格式
+    我們做個測試來修改 app.routing.ts 檔案
+    在 /test 後面加上 express.json()
+    import express from 'express';
+    const router = express.Router();
+
+    router.get('/test', (req, res, next) => {
+        res.send('test!');
+    });
+
+    router.post('/test', express.json(), (req, res, next) => {
+        res.send(JSON.stringify(req.body));
+    });
+
+    export default router;
+
+    然後用 postman 去做測試看回傳的結果
+    postman 上面打開網址 post localhost:3000/test
+    header 新增一個 Content-Type: application/json
+    body 用 raw 送出 {"name": "terry"}
+    送出以後就會看到 res 是回 {"name": "terry"}
+
+    
