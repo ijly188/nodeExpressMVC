@@ -9,4 +9,8 @@ router.post('/test', express.json(), (req, res, next) => {
     res.send(JSON.stringify(req.body));
 });
 
+router.get('/error', (req, res, next) => {
+    next('error page.');
+});
+
 export default router;
