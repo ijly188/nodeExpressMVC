@@ -276,4 +276,47 @@
     body 用 raw 送出 {"name": "terry"}
     送出以後就會看到 res 是回 {"name": "terry"}
 
+    // https://ithelp.ithome.com.tw/articles/10241761
+    錯誤處理的部分等到後面真的有在做東西的時候再一起來看要怎麼建構這邊的流程
+    沒有意外的話應該會抽兩個部分、純粹的驗證跟例外一致處理
+
+    設定 mongoDB 連線
+    後面可能要想一下怎麼處理 migration 或者初始假資料的問題
+    然後真的要做到像 laravel 的話可能要考慮一下要做 ejs
+    然後因為要連 mongoDB 所以調整一下 index.ts
+    import express from 'express';
+    import path from 'path';
+    import dotenv from 'dotenv';
+    import cors from 'cors';
+    import helmet from 'helmet';
+    import { Database } from './database';
+    import appRoute from './app/app.routing';
+
+    // 這個要放在前面，因為怕後面 process.env.NODE_ENV 會沒有東西
+    dotenv.config({ path: path.resolve(__dirname, `./environments/${ process.env.NODE_ENV }.env`) });
+
+    Database.connect();
+
+
+    const app = express();
+
+    app.use(cors());
+    app.use(
+        helmet.contentSecurityPolicy({
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "example.com"],
+                objectSrc: ["'none'"],
+                upgradeInsecureRequests: [],
+            },
+        })
+    );
+
+    app.get('/', (req, res, next) => {
+        res.send('Hello, World!!');
+    });
+
+    app.use('/', appRoute);
+
+    app.listen(process.env.PORT, () => console.log(`http server is running at port ${ process.env.PORT }.`));
     
